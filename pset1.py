@@ -329,9 +329,9 @@ if __name__ == '__main__':
     ]
 
     img = Imagem.carregar(imgPigBird)
-    img_correlacao = img.correlacao(kernelQuestao4)
+    img_correlacao = img.borrada(9)
+    img.mostrar()
     img_correlacao.mostrar()
-    img_correlacao.salvar('doc_images/qt4_pigbird_correlacao.png')
 
     # pagina 13, cap 5.2
 
