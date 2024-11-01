@@ -36,11 +36,11 @@ class Imagem:
     def get_pixel(self, x, y):
         if x < 0:
             x = 0
+        elif x >= self.largura: 
+            x = self.largura - 1
         if y < 0:
             y = 0
-        if x >= self.largura:
-            x = self.largura - 1
-        if y >= self.altura:
+        elif y >= self.altura:
             y = self.altura - 1
 
         pos = self.largura * y + x
@@ -70,7 +70,7 @@ class Imagem:
             return 255
         if pixel < 0:
             return 0
-        return int(pixel)
+        return round(pixel)
     
     def correlacao(self, kernel):
         resultado = Imagem.nova(self.largura, self.altura)
@@ -86,7 +86,6 @@ class Imagem:
                         posX = coluna + (colunaK - centro)
                         posY = linha + (linhaK - centro)
                         cor = self.get_pixel(posX, posY)
-                        cor = self.corrigir_pixel(cor)
                         soma += kernel[linhaK][colunaK] * cor
                 resultado.set_pixel(coluna, linha, soma)
                 
@@ -97,9 +96,10 @@ class Imagem:
             n += 1
         kernel = []
         aux = []
+        valorPixel = 1 / (n * n)
         for i in range(n):
             for j in range(n):
-                aux.append(1)
+                aux.append(valorPixel)
             kernel.append(aux[:])
             aux = []
         return kernel[:]
@@ -107,7 +107,7 @@ class Imagem:
     def borrada(self, n):
         resultado = Imagem.nova(self.largura, self.altura)
         kernel = self.gerar_kernel(n)
-        kernelDim = len(kernel)
+        kernelDim = n
         centro = kernelDim // 2
         soma = 0
         for linha in range(resultado.altura):
@@ -119,9 +119,7 @@ class Imagem:
                         posX = coluna + (colunaK - centro)
                         posY = linha + (linhaK - centro)
                         cor = self.get_pixel(posX, posY)
-                        cor = self.corrigir_pixel(cor)
                         soma += kernel[linhaK][colunaK] * cor
-                soma = soma / (kernelDim**2)
                 soma = self.corrigir_pixel(soma)
                 resultado.set_pixel(coluna, linha, soma)
         
@@ -290,48 +288,13 @@ if __name__ == '__main__':
     # LEMBRAR DE APAGAR O CÓDIGO NA LINHA 208 E 209
     imgCenteredPixel = './test_images/centered_pixel.png'
     imgPigBird = './test_images/pigbird.png'
-    kernelIdentidade = [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 0, 0],
-    ]
+    imgCat = './test_images/cat.png'
 
-    kernelTranslacao = [
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-    ]
-
-    kernelMedia = [
-        [0, 0.2, 0],
-        [0.2, 0.2, 0.2],
-        [0, 0.2, 0],
-    ]
-
-    kernelQuestao4 = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ]
-
-    kernel = [
-        [1, 1, 1],
-        [1, 1, 1],
-        [1, 1, 1]
-    ]
-
-    img = Imagem.carregar(imgPigBird)
-    img_correlacao = img.borrada(9)
+    img = Imagem.carregar(imgCat)
     img.mostrar()
+    img_correlacao = img.borrada(5)
     img_correlacao.mostrar()
+
 
     # pagina 13, cap 5.2
 
