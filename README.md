@@ -9,8 +9,8 @@ Questões feitas ao decorrer do pset: [questoes.md](questoes.md)
 
 # Tecnologias Utilizadas
 
-- [Python 3](https://www.python.org/)
-- [Pillow](https://pillow.readthedocs.io/en/stable/)
+- <a href="https://www.python.org/" target="_blank">Python 3</a>
+- <a href="https://pillow.readthedocs.io/en/stable/" target="_blank">Pillow</a>
 
 # Autor
 
