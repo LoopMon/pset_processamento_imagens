@@ -112,7 +112,6 @@ class Imagem:
         soma = 0
         for linha in range(resultado.altura):
             for coluna in range(resultado.largura):
-                
                 soma = 0
                 for linhaK in range(kernelDim):
                     for colunaK in range(kernelDim):
@@ -126,11 +125,60 @@ class Imagem:
         return resultado
 
     def focada(self, n):
-        raise NotImplementedError
+        resultado = Imagem.nova(self.largura, self.altura)
+        imagemBorrada = self.borrada(n)
+        corImagem = ""
+        corImagemBorrada = ""
+        cor = ""
+        for linha in range(self.altura):
+            for coluna in range(self.largura):
+                corImagem = self.get_pixel(coluna, linha) * 2
+                corImagemBorrada = imagemBorrada.get_pixel(coluna, linha)
+                cor = corImagem - corImagemBorrada
+                cor = self.corrigir_pixel(cor)
+                resultado.set_pixel(coluna, linha, cor)
 
+        return resultado
+    
     def bordas(self):
-        raise NotImplementedError
+        kernelX = [
+            [-1, 0, 1],
+            [-2, 0, 2],
+            [-1, 0, 1]
+        ]
+        kernelY = [
+            [-1, -2, 1],
+            [0, 0, 0],
+            [1, 2, 1]
+        ]
+        kernelDim = 3
+        centro = 1
+        resultado = Imagem.nova(self.largura, self.altura)
 
+        somaKernelX = 0
+        somaKernelY = 0
+        combinacao = 0
+        # percorrer a imagem
+        for linha in range(self.altura):
+            for coluna in range(self.largura):
+                somaKernelX = 0
+                somaKernelY = 0
+                combinacao = 0
+                # percorrer o kernel
+                for linhaK in range(kernelDim):
+                    for colunaK in range(kernelDim):
+                        posX = coluna + (colunaK - centro)
+                        posY = linha + (linhaK - centro)
+                        cor = self.get_pixel(posX, posY)
+
+                        somaKernelX += kernelX[linhaK][colunaK] * cor
+                        somaKernelY += kernelY[linhaK][colunaK] * cor
+
+                combinacao = self.corrigir_pixel(math.sqrt(somaKernelX**2 + somaKernelY**2))
+                resultado.set_pixel(coluna, linha, combinacao)
+
+        return resultado
+    
     # Abaixo deste ponto estão utilitários para carregar, salvar e mostrar
     # as imagens, bem como para a realização de testes. Você deve ler as funções
     # abaixo para entendê-las e verificar como funcionam, mas você não deve
@@ -226,10 +274,6 @@ class Imagem:
         # dispare outro evento de redimensionamento (causando um loop infinito de
         # redimensionamento). Para maiores informações, ver:
         # https://stackoverflow.com/questions/22838255/tkinter-canvas-resizing-automatically
-        min_largura = self.largura if self.largura > 100 else self.largura * 20
-        min_altura = self.altura if self.altura > 100 else self.altura * 20
-        toplevel.minsize(width=min_largura, height=min_altura)
-
         tela = tkinter.Canvas(toplevel, height=self.altura,
                               width=self.largura, highlightthickness=0)
         tela.pack()
@@ -285,18 +329,22 @@ if __name__ == '__main__':
     # O código neste bloco só será executado quando você executar
     # explicitamente seu script e não quando os testes estiverem
     # sendo executados. Este é um bom lugar para gerar imagens, etc.
-    # LEMBRAR DE APAGAR O CÓDIGO NA LINHA 208 E 209
-    imgCenteredPixel = './test_images/centered_pixel.png'
-    imgPigBird = './test_images/pigbird.png'
-    imgCat = './test_images/cat.png'
-
-    img = Imagem.carregar(imgCat)
+    kernelX = [
+        [-1, 0, 1],
+        [-2, 0, 2],
+        [-1, 0, 1]
+    ]
+    kernelY = [
+        [-1, -2, -1],
+        [0, 0, 0],
+        [1, 2, 1]
+    ]
+    img = Imagem.carregar('./test_images/sparrowchick.png')
+    img_focada = img.focada(11)
+    
     img.mostrar()
-    img_correlacao = img.borrada(5)
-    img_correlacao.mostrar()
+    img_focada.mostrar()
 
-
-    # pagina 13, cap 5.2
 
     # O código a seguir fará com que as janelas de Imagem.mostrar
     # sejam exibidas corretamente, quer estejamos executando
