@@ -26,14 +26,32 @@ from io import BytesIO
 from PIL import Image as PILImage
 
 
-# Classe Imagem:
 class Imagem:
     def __init__(self, largura, altura, pixels):
+        """
+        Inicializa uma imagem com largura, altura e lista de pixels.
+        
+        Parâmetros:
+        largura (int): Largura da imagem.
+        altura (int): Altura da imagem.
+        pixels (list[int]): Lista linear de pixels que representa a imagem.
+        """
         self.largura = largura
         self.altura = altura
         self.pixels = pixels
 
     def get_pixel(self, x, y):
+        """
+        Retorna o valor do pixel na posição (x, y), tratando bordas.
+        
+        Parâmetros:
+        x (int): Coordenada x do pixel.
+        y (int): Coordenada y do pixel.
+
+        Retorna:
+        int: Valor do pixel ajustado para tratar bordas da imagem.
+        """
+        # Tratamento para coordenadas fora dos limites
         if x < 0:
             x = 0
         elif x >= self.largura: 
@@ -43,14 +61,33 @@ class Imagem:
         elif y >= self.altura:
             y = self.altura - 1
 
-        pos = self.largura * y + x
+        # Cálculo da posição na lista de pixels
+        pos = self.largura * y + x 
         return self.pixels[pos]
 
     def set_pixel(self, x, y, c):
-        pos = self.largura * y + x
+        """
+        Define o valor de um pixel na posição (x, y).
+        
+        Parâmetros:
+        x (int): Coordenada x do pixel.
+        y (int): Coordenada y do pixel.
+        c (int): Novo valor do pixel.
+        """
+        # Cálculo da posição na lista de pixels
+        pos = self.largura * y + x 
         self.pixels[pos] = c
 
     def aplicar_por_pixel(self, func):
+        """
+        Aplica uma função a cada pixel da imagem, retornando uma nova imagem.
+        
+        Parâmetros:
+        func (function): Função que recebe um pixel e retorna o valor transformado.
+
+        Retorna:
+        Imagem: Nova imagem com a função aplicada a cada pixel.
+        """
         resultado = Imagem.nova(self.largura, self.altura)
 
         nova_cor = ""
@@ -63,121 +100,156 @@ class Imagem:
         return resultado
 
     def invertida(self):
+        """
+        Retorna uma nova imagem com cores invertidas.
+
+        Retorna:
+        Imagem: Imagem com cores invertidas.
+        """
         return self.aplicar_por_pixel(lambda c: 255 - c)
     
     def corrigir_pixel(self, pixel):
+        """
+        Corrige o valor de um pixel para estar entre 0 e 255.
+        
+        Parâmetros:
+        pixel (float): Valor do pixel a ser corrigido.
+
+        Retorna:
+        int: Valor do pixel corrigido.
+        """
         pixel = round(pixel)
         if pixel >= 255:
             return 255
         if pixel <= 0:
             return 0
+        
         return pixel
     
-    def correlacao(self, kernel):
+    def correlacao(self, kernel, corrigir_pixel=True):
+        """
+        Aplica uma operação de correlação na imagem com um kernel dado.
+        
+        Parâmetros:
+        kernel (list[list[int]]): Matriz usada para a operação de correlação.
+        corrigir_pixel (bool): Indica se os pixels devem ser corrigidos para estarem no intervalo [0, 255].
+
+        Retorna:
+        Imagem: Nova imagem resultante da aplicação da correlação.
+        """
         resultado = Imagem.nova(self.largura, self.altura)
-        kernelDim = len(kernel)
-        centro = kernelDim // 2
+        kernel_dim = len(kernel)
+        centro = kernel_dim // 2
         soma = 0
         for linha in range(resultado.altura):
             for coluna in range(resultado.largura):
-                
+                # Aplica o kernel ao redor do pixel (linha, coluna)
                 soma = 0
-                for linhaK in range(kernelDim):
-                    for colunaK in range(kernelDim):
-                        posX = coluna + (colunaK - centro)
-                        posY = linha + (linhaK - centro)
+                for linha_kernel in range(kernel_dim):
+                    for coluna_kernel in range(kernel_dim):
+                        posX = coluna + (coluna_kernel - centro)
+                        posY = linha + (linha_kernel - centro)
                         cor = self.get_pixel(posX, posY)
-                        soma += kernel[linhaK][colunaK] * cor
+                        soma += kernel[linha_kernel][coluna_kernel] * cor
+
+                if corrigir_pixel:
+                    soma = self.corrigir_pixel(soma)
                 resultado.set_pixel(coluna, linha, soma)
                 
         return resultado
     
     def gerar_kernel(self, n):
+        """
+        Gera um kernel de borramento de dimensão n x n com valores iguais.
+        
+        Parâmetros:
+        n (int): Tamanho do kernel (sempre convertido para um número ímpar).
+
+        Retorna:
+        list[list[float]]: Kernel de tamanho n x n.
+        """
         if n % 2 == 0:
-            n += 1
+            n += 1 # Garantir que o kernel seja de tamanho ímpar
+
         kernel = []
-        aux = []
-        valorPixel = 1 / (n * n)
+        valor_pixel = 1 / (n * n)
         for i in range(n):
-            for j in range(n):
-                aux.append(valorPixel)
-            kernel.append(aux[:])
-            aux = []
+            linha = [valor_pixel] * n
+            kernel.append(linha)
+
         return kernel[:]
         
     def borrada(self, n):
-        resultado = Imagem.nova(self.largura, self.altura)
-        kernel = self.gerar_kernel(n)
-        kernelDim = n
-        centro = kernelDim // 2
-        soma = 0
-        for linha in range(resultado.altura):
-            for coluna in range(resultado.largura):
-                soma = 0
-                for linhaK in range(kernelDim):
-                    for colunaK in range(kernelDim):
-                        posX = coluna + (colunaK - centro)
-                        posY = linha + (linhaK - centro)
-                        cor = self.get_pixel(posX, posY)
-                        soma += kernel[linhaK][colunaK] * cor
-                soma = self.corrigir_pixel(soma)
-                resultado.set_pixel(coluna, linha, soma)
+        """
+        Aplica um efeito de desfoque na imagem usando um kernel de tamanho n x n.
         
+        Parâmetros:
+        n (int): Tamanho do kernel de desfoque.
+
+        Retorna:
+        Imagem: Imagem borrada.
+        """
+        kernel = self.gerar_kernel(n)
+        resultado = self.correlacao(kernel)
+
         return resultado
 
     def focada(self, n):
+        """
+        Aumenta a nitidez da imagem aplicando um filtro de foco.
+        
+        Parâmetros:
+        n (int): Tamanho do kernel de desfoque usado na operação de foco.
+
+        Retorna:
+        Imagem: Imagem com foco aumentado.
+        """
+
         resultado = Imagem.nova(self.largura, self.altura)
-        imagemBorrada = self.borrada(n)
-        corImagem = ""
-        corImagemBorrada = ""
-        cor = ""
+        imagem_borrada = self.borrada(n)
         for linha in range(self.altura):
             for coluna in range(self.largura):
-                corImagem = self.get_pixel(coluna, linha) * 2
-                corImagemBorrada = imagemBorrada.get_pixel(coluna, linha)
-                cor = corImagem - corImagemBorrada
+                # Aumenta a nitidez subtraindo a imagem borrada
+                cor_imagem = self.get_pixel(coluna, linha) * 2
+                cor_imagem_borrada = imagem_borrada.get_pixel(coluna, linha)
+                cor = cor_imagem - cor_imagem_borrada
                 cor = self.corrigir_pixel(cor)
                 resultado.set_pixel(coluna, linha, cor)
 
         return resultado
     
     def bordas(self):
-        kernelX = [
-            [-1, 0, 1],
-            [-2, 0, 2],
-            [-1, 0, 1]
+        """
+        Detecta bordas na imagem usando os operadores de Sobel.
+        
+        Retorna:
+        Imagem: Imagem realçada para mostrar as bordas.
+        """
+        kernel_X = [
+            [1, 0, -1],
+            [2, 0, -2],
+            [1, 0, -1]
         ]
-        kernelY = [
+        kernel_Y = [
             [1, 2, 1],
             [0, 0, 0],
             [-1, -2, -1]
         ]
-        kernelDim = 3
-        centro = 1
-        resultado = Imagem.nova(self.largura, self.altura)
 
-        somaKernelX = 0
-        somaKernelY = 0
+        resultado = Imagem.nova(self.largura, self.altura)
+        imagem_kernel_X = self.correlacao(kernel_X, corrigir_pixel=False)
+        imagem_kernel_Y = self.correlacao(kernel_Y, corrigir_pixel=False)
+
         combinacao = 0
-        # percorrer a imagem
+        # Combina os resultados dos kernels X e Y
         for linha in range(self.altura):
             for coluna in range(self.largura):
-                somaKernelX = 0
-                somaKernelY = 0
-                combinacao = 0
-                # percorrer o kernel
-                for linhaK in range(kernelDim):
-                    for colunaK in range(kernelDim):
-                        posX = coluna + colunaK - centro
-                        posY = linha + linhaK - centro
-                        cor = self.get_pixel(posX, posY)
+                cor_imagem_x = imagem_kernel_X.get_pixel(coluna, linha)
+                cor_imagem_y = imagem_kernel_Y.get_pixel(coluna, linha)
 
-                        somaKernelX += kernelX[linhaK][colunaK] * cor
-                        somaKernelY += kernelY[linhaK][colunaK] * cor
-
-                combinacao = self.corrigir_pixel(math.sqrt(somaKernelX**2 + somaKernelY**2))
+                combinacao = self.corrigir_pixel(math.sqrt(cor_imagem_x**2 + cor_imagem_y**2))
                 resultado.set_pixel(coluna, linha, combinacao)
-
+        
         return resultado
     
     
@@ -331,11 +403,7 @@ if __name__ == '__main__':
     # O código neste bloco só será executado quando você executar
     # explicitamente seu script e não quando os testes estiverem
     # sendo executados. Este é um bom lugar para gerar imagens, etc.
-    img = Imagem.carregar('./test_images/cat.png')
-    img_bordas = img.bordas()
-    
-    img.mostrar()
-    img_bordas.mostrar()
+    help(Imagem)
 
     # O código a seguir fará com que as janelas de Imagem.mostrar
     # sejam exibidas corretamente, quer estejamos executando
