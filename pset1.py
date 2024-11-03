@@ -66,11 +66,12 @@ class Imagem:
         return self.aplicar_por_pixel(lambda c: 255 - c)
     
     def corrigir_pixel(self, pixel):
-        if pixel > 255:
+        pixel = round(pixel)
+        if pixel >= 255:
             return 255
-        if pixel < 0:
+        if pixel <= 0:
             return 0
-        return round(pixel)
+        return pixel
     
     def correlacao(self, kernel):
         resultado = Imagem.nova(self.largura, self.altura)
@@ -147,9 +148,9 @@ class Imagem:
             [-1, 0, 1]
         ]
         kernelY = [
-            [-1, -2, 1],
+            [1, 2, 1],
             [0, 0, 0],
-            [1, 2, 1]
+            [-1, -2, -1]
         ]
         kernelDim = 3
         centro = 1
@@ -167,8 +168,8 @@ class Imagem:
                 # percorrer o kernel
                 for linhaK in range(kernelDim):
                     for colunaK in range(kernelDim):
-                        posX = coluna + (colunaK - centro)
-                        posY = linha + (linhaK - centro)
+                        posX = coluna + colunaK - centro
+                        posY = linha + linhaK - centro
                         cor = self.get_pixel(posX, posY)
 
                         somaKernelX += kernelX[linhaK][colunaK] * cor
@@ -178,6 +179,7 @@ class Imagem:
                 resultado.set_pixel(coluna, linha, combinacao)
 
         return resultado
+    
     
     # Abaixo deste ponto estão utilitários para carregar, salvar e mostrar
     # as imagens, bem como para a realização de testes. Você deve ler as funções
@@ -329,22 +331,11 @@ if __name__ == '__main__':
     # O código neste bloco só será executado quando você executar
     # explicitamente seu script e não quando os testes estiverem
     # sendo executados. Este é um bom lugar para gerar imagens, etc.
-    kernelX = [
-        [-1, 0, 1],
-        [-2, 0, 2],
-        [-1, 0, 1]
-    ]
-    kernelY = [
-        [-1, -2, -1],
-        [0, 0, 0],
-        [1, 2, 1]
-    ]
-    img = Imagem.carregar('./test_images/sparrowchick.png')
-    img_focada = img.focada(11)
+    img = Imagem.carregar('./test_images/cat.png')
+    img_bordas = img.bordas()
     
     img.mostrar()
-    img_focada.mostrar()
-
+    img_bordas.mostrar()
 
     # O código a seguir fará com que as janelas de Imagem.mostrar
     # sejam exibidas corretamente, quer estejamos executando
